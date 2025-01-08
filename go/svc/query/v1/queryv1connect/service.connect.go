@@ -44,15 +44,6 @@ const (
 	QueryServiceQueryProcedure = "/svc.query.v1.QueryService/Query"
 )
 
-// These variables are the protoreflect.Descriptor objects for the RPCs defined in this package.
-var (
-	queryServiceServiceDescriptor               = v1.File_svc_query_v1_service_proto.Services().ByName("QueryService")
-	queryServiceSummarizeEventsMethodDescriptor = queryServiceServiceDescriptor.Methods().ByName("SummarizeEvents")
-	queryServiceWatchQueryMethodDescriptor      = queryServiceServiceDescriptor.Methods().ByName("WatchQuery")
-	queryServiceParseMethodDescriptor           = queryServiceServiceDescriptor.Methods().ByName("Parse")
-	queryServiceQueryMethodDescriptor           = queryServiceServiceDescriptor.Methods().ByName("Query")
-)
-
 // QueryServiceClient is a client for the svc.query.v1.QueryService service.
 type QueryServiceClient interface {
 	SummarizeEvents(context.Context, *connect.Request[v1.SummarizeEventsRequest]) (*connect.Response[v1.SummarizeEventsResponse], error)
@@ -70,29 +61,30 @@ type QueryServiceClient interface {
 // http://api.acme.com or https://acme.com/grpc).
 func NewQueryServiceClient(httpClient connect.HTTPClient, baseURL string, opts ...connect.ClientOption) QueryServiceClient {
 	baseURL = strings.TrimRight(baseURL, "/")
+	queryServiceMethods := v1.File_svc_query_v1_service_proto.Services().ByName("QueryService").Methods()
 	return &queryServiceClient{
 		summarizeEvents: connect.NewClient[v1.SummarizeEventsRequest, v1.SummarizeEventsResponse](
 			httpClient,
 			baseURL+QueryServiceSummarizeEventsProcedure,
-			connect.WithSchema(queryServiceSummarizeEventsMethodDescriptor),
+			connect.WithSchema(queryServiceMethods.ByName("SummarizeEvents")),
 			connect.WithClientOptions(opts...),
 		),
 		watchQuery: connect.NewClient[v1.WatchQueryRequest, v1.WatchQueryResponse](
 			httpClient,
 			baseURL+QueryServiceWatchQueryProcedure,
-			connect.WithSchema(queryServiceWatchQueryMethodDescriptor),
+			connect.WithSchema(queryServiceMethods.ByName("WatchQuery")),
 			connect.WithClientOptions(opts...),
 		),
 		parse: connect.NewClient[v1.ParseRequest, v1.ParseResponse](
 			httpClient,
 			baseURL+QueryServiceParseProcedure,
-			connect.WithSchema(queryServiceParseMethodDescriptor),
+			connect.WithSchema(queryServiceMethods.ByName("Parse")),
 			connect.WithClientOptions(opts...),
 		),
 		query: connect.NewClient[v1.QueryRequest, v1.QueryResponse](
 			httpClient,
 			baseURL+QueryServiceQueryProcedure,
-			connect.WithSchema(queryServiceQueryMethodDescriptor),
+			connect.WithSchema(queryServiceMethods.ByName("Query")),
 			connect.WithClientOptions(opts...),
 		),
 	}
@@ -140,28 +132,29 @@ type QueryServiceHandler interface {
 // By default, handlers support the Connect, gRPC, and gRPC-Web protocols with the binary Protobuf
 // and JSON codecs. They also support gzip compression.
 func NewQueryServiceHandler(svc QueryServiceHandler, opts ...connect.HandlerOption) (string, http.Handler) {
+	queryServiceMethods := v1.File_svc_query_v1_service_proto.Services().ByName("QueryService").Methods()
 	queryServiceSummarizeEventsHandler := connect.NewUnaryHandler(
 		QueryServiceSummarizeEventsProcedure,
 		svc.SummarizeEvents,
-		connect.WithSchema(queryServiceSummarizeEventsMethodDescriptor),
+		connect.WithSchema(queryServiceMethods.ByName("SummarizeEvents")),
 		connect.WithHandlerOptions(opts...),
 	)
 	queryServiceWatchQueryHandler := connect.NewServerStreamHandler(
 		QueryServiceWatchQueryProcedure,
 		svc.WatchQuery,
-		connect.WithSchema(queryServiceWatchQueryMethodDescriptor),
+		connect.WithSchema(queryServiceMethods.ByName("WatchQuery")),
 		connect.WithHandlerOptions(opts...),
 	)
 	queryServiceParseHandler := connect.NewUnaryHandler(
 		QueryServiceParseProcedure,
 		svc.Parse,
-		connect.WithSchema(queryServiceParseMethodDescriptor),
+		connect.WithSchema(queryServiceMethods.ByName("Parse")),
 		connect.WithHandlerOptions(opts...),
 	)
 	queryServiceQueryHandler := connect.NewUnaryHandler(
 		QueryServiceQueryProcedure,
 		svc.Query,
-		connect.WithSchema(queryServiceQueryMethodDescriptor),
+		connect.WithSchema(queryServiceMethods.ByName("Query")),
 		connect.WithHandlerOptions(opts...),
 	)
 	return "/svc.query.v1.QueryService/", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
